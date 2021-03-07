@@ -13,7 +13,7 @@
             :food [12 10]})
 
 (defn setup []
-  (q/frame-rate 3)
+  (q/frame-rate 5)
   (q/color-mode :rgb)
   (q/no-stroke)
   dbstate)
@@ -39,7 +39,9 @@
   [(inc (rand-int n)) (inc (rand-int n))])
 
 
-(defn food-move [snake] 
+(defn food-move 
+  "FIXME il cibo non deve comparire sul serpente"
+  [snake] 
   (get-random-point grid-size))
 
 (defn update-state [state]
@@ -83,7 +85,6 @@
           :down (assoc state :dir [0 1])
           :left (assoc state :dir [-1 0])
           state)]
-    (println (:dir result))
     result))
 
 (comment 
