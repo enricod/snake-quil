@@ -10,66 +10,79 @@
             :alive true
             :dir [1 0]
             :lifeTime 0
-            :food [10 10]})
+            :food [12 10]})
 
 (defn setup []
-  (q/frame-rate 1)
+  (q/frame-rate 2)
   (q/color-mode :rgb)
   (q/no-stroke)
   state)
 
-(defn get-neighbors [idx vec]
-  [(get vec (dec (- idx grid-size)))
-   (get vec (- idx grid-size))
-   (get vec (inc (- idx grid-size)))
-
-   (get vec (dec idx))
-   (get vec (inc idx))
-
-   (get vec (dec (+ grid-size idx)))
-   (get vec (+ grid-size idx))
-   (get vec (inc (+ grid-size idx)))])
-
-(defn new-head [snake dir] 
+(defn new-head 
+  "torna la nuova posizione della testa del serpente"
+  [snake dir] 
   (vec (map + (first snake) dir)) )
 
-(defn snake-move [snk]
-           (conj snk (new-head snk (:dir state)) ))
+(defn snake-move
+  "muove il serpente, e torna un serpende lungo n+1"
+  [snk]
+  (let [newHead  (new-head snk (:dir state))
+        newSnake (conj snk newHead)]
+    newSnake))
+
+(defn snake-eating? [snake food]
+  (= (first snake) food))
+
+(defn get-random-point
+  "torna una posizione casuale sulla scacchiera (da 1 a nr mattonelle)"
+  [n]
+  [(inc (rand-int n)) (inc (rand-int n))])
+
+(defn food-move [snake] 
+  (get-random-point grid-size))
 
 (defn update-state [state]
-  (assoc state :snake
-         (snake-move (:snake  state))))
+  (let [snake2 (snake-move (:snake  state))
+        eating? (snake-eating? snake2 (:food state))]
+    (assoc state :snake
+           (if eating?
+             snake2
+             (drop-last snake2))
+           :food (if eating? 
+                   (food-move snake2)
+                   (:food state)))))
 
 (defn cell-size [] 
   (quot (q/width) grid-size))
 
+
 (defn draw-cell [pos-v color]
-  (let [cell-size (cell-size)]
+  (let [cell-size (cell-size)
+        x (* cell-size (first pos-v))
+        y (* cell-size (second pos-v))]
     (apply q/fill color)
-    (q/rect (first pos-v) (second pos-v) cell-size cell-size)))
+    (q/rect x y cell-size cell-size)))
 
 
 (defn draw-state [state]
   (q/background 200)
-  (let [cell-size (cell-size)]
-    (doseq [[i v] (map-indexed vector (:snake state))]
-      (let [x (* cell-size (first v))
-            y (* cell-size (second v))
-            cell-color (if (= i 0 ) [0 255 0] [0 0 0])]
-          (draw-cell [x y] cell-color)))))
+  (draw-cell (:food state) [0 0 255])
+  (doseq [[i v] (map-indexed vector (:snake state))]
+    (let [cell-color (if (= i 0 ) [0 255 0] [0 0 0])]
+      (draw-cell (vec v) cell-color))))
 
 
 (comment 
   (q/defsketch snake
-  :title "Game of life"
-  :size [800 800]
+    :title "Game of life"
+    :size [800 800]
   ; setup function called only once, during sketch initialization.
-  :setup setup
+    :setup setup
   ; update-state is called on each iteration before draw-state.
-  :update update-state
-  :draw draw-state
-  :features [:keep-on-top]
+    :update update-state
+    :draw draw-state
+    :features [:keep-on-top]
   ; This sketch uses functional-mode middleware.
   ; Check quil wiki for more info about middlewares and particularly
   ; fun-mode.
-  :middleware [m/fun-mode]))
+    :middleware [m/fun-mode]))
